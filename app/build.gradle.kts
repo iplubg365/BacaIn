@@ -11,12 +11,26 @@ android {
         applicationId = "com.bacain.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        val run = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+        versionCode = run
+        versionName = "1.$run"
+    }
+
+    signingConfigs {
+        create("bacain") {
+            storeFile = file("bacain.jks")
+            storePassword = "bacain123"
+            keyAlias = "bacain"
+            keyPassword = "bacain123"
+        }
     }
 
     buildTypes {
-        release { isMinifyEnabled = false }
+        debug { signingConfig = signingConfigs.getByName("bacain") }
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("bacain")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

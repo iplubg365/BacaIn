@@ -8,6 +8,7 @@ import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.graphics.Outline
 import android.graphics.PixelFormat
 import android.graphics.Typeface
@@ -44,6 +45,7 @@ class OverlayService : Service() {
     private lateinit var speedLabel: TextView
     private lateinit var actionBtn: TextView
     private lateinit var countdownView: TextView
+    private lateinit var guide: View
 
     private var state = State.IDLE
     private var pos = 0f
@@ -209,6 +211,19 @@ class OverlayService : Service() {
             setShadowLayer(8f, 0f, 2f, Color.BLACK)
             visibility = View.GONE
         }
+        // Kotak penanda baris baca (di atas teks, di bawah countdown)
+        guide = View(this).apply {
+            background = GradientDrawable().apply {
+                setColor(0x33FFB300)
+                setStroke(dp(2), 0xAAFFC107.toInt())
+                cornerRadius = dp(10).toFloat()
+            }
+            isClickable = false
+        }
+        prompter.addView(guide, prompter.indexOfChild(scroll) + 1, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, dp(60)).apply {
+            setMargins(dp(8), dp(12), dp(8), 0)
+        })
         prompter.addView(countdownView, FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         box.addView(prompter, LinearLayout.LayoutParams(
@@ -259,6 +274,16 @@ class OverlayService : Service() {
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, store.textSize.toFloat())
         prompter.setBackgroundColor(Color.argb(store.bgOpacity * 255 / 100, 0, 0, 0))
         speedLabel.text = "≡ ${store.speed}"
+        updateGuide()
+    }
+
+    private fun updateGuide() {
+        val lh = tv.lineHeight
+        val bandH = (lh * 1.35f).toInt()
+        val lp = guide.layoutParams as FrameLayout.LayoutParams
+        lp.height = bandH
+        guide.layoutParams = lp
+        tv.setPadding(dp(14), dp(12) + (bandH - lh) / 2, dp(14), tv.paddingBottom)
     }
 
     private fun reload() {
@@ -280,6 +305,7 @@ class OverlayService : Service() {
     private fun changeSize(d: Int) {
         store.textSize = (store.textSize + d).coerceIn(16, 60)
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, store.textSize.toFloat())
+        updateGuide()
     }
 
     // ---------- Logika prompter ----------
